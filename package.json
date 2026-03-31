@@ -11,6 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "dotenv": "^17.3.1",
+    "express": "^5.2.1",
     "firebase": "^12.11.0",
     "node-telegram-bot-api": "^0.67.0"
   }

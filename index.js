@@ -7,6 +7,17 @@ const { db } = require("./firebase");
 
 const ADMIN_ID = 5869201380;
 
+const express = require("express");
+const app = express();
+
+app.get("/", (req, res) => {
+    res.send("Bot ishlayapti 🚀");
+});
+
+app.listen(3000, () => {
+    console.log("Server running on port 3000");
+});
+
 // START
 bot.onText(/\/start/, (msg) => {
     bot.sendMessage(msg.chat.id, "👋 IshTop ga xush kelibsiz!", {
