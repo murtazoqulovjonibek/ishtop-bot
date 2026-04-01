@@ -176,11 +176,11 @@ ${text}
         bot.sendMessage(msg.chat.id, `
 📝 Ish e'lon yuboring:
 
-Lavozim: Buxo
-Maosh:
-Manzil:
-Tel:
-Viloyat:
+Lavozim: Afitsant
+Maosh: 1.500.000 ming
+Manzil: Kogon shahar
+Tel: +99812345678
+Viloyat: Buxoro
 
 Shu ko'rinishda bo'lsin 👆
 
