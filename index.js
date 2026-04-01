@@ -177,7 +177,7 @@ ${text}
 📝 Ish e'lon yuboring:
 
 Lavozim: Afitsant
-Maosh: 1.500.000 ming
+Maosh: 1.500.000 ming so'm
 Manzil: Kogon shahar
 Tel: +99812345678
 Viloyat: Buxoro
