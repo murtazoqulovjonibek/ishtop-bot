@@ -1,22 +1,23 @@
 require('dotenv').config();
 const TelegramBot = require('node-telegram-bot-api');
+const express = require("express");
 
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
-
 const { db } = require("./firebase");
 
 const ADMIN_ID = 5869201380;
 
-const express = require("express");
+// 🌐 EXPRESS (Render uchun)
 const app = express();
+app.get("/", (req, res) => res.send("Bot ishlayapti 🚀"));
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log("Server running on port " + PORT));
 
-app.get("/", (req, res) => {
-    res.send("Bot ishlayapti 🚀");
-});
-
-app.listen(3000, () => {
-    console.log("Server running on port 3000");
-});
+// 📍 REGION LIST
+const regions = [
+    "Toshkent", "Samarqand", "Buxoro", "Andijon",
+    "Farg‘ona", "Namangan", "Qashqadaryo", "Surxondaryo"
+];
 
 // START
 bot.onText(/\/start/, (msg) => {
@@ -31,7 +32,7 @@ bot.onText(/\/start/, (msg) => {
     });
 });
 
-// VIP COMMAND
+// VIP
 bot.onText(/\/vip/, (msg) => {
     bot.sendMessage(msg.chat.id, `
 💎 VIP e'lon qilish
@@ -39,13 +40,13 @@ bot.onText(/\/vip/, (msg) => {
 Narxi: 5 000 so'm
 
 💳 To‘lov:
-Click / Payme:   5614681916164076
+Click / Payme: 5614681916164076
 
 📸 To‘lovdan keyin screenshot yuboring
     `);
 });
 
-// ADMIN PANEL
+// ADMIN
 bot.onText(/\/admin/, (msg) => {
     if (msg.from.id !== ADMIN_ID) {
         return bot.sendMessage(msg.chat.id, "❌ Ruxsat yo‘q");
@@ -54,23 +55,41 @@ bot.onText(/\/admin/, (msg) => {
     bot.sendMessage(msg.chat.id, `
 🛠 Admin panel:
 
-📋 Ishlarni ko‘rish → "admin jobs"
-⭐ VIP qilish → "vip ID"
-❌ Ishni o‘chirish → "delete ID"
+📋 Ishlarni ko‘rish → admin jobs
+⭐ VIP qilish → vip ID
+❌ Ishni o‘chirish → delete ID
     `);
 });
 
-// MAIN MESSAGE HANDLER
+// MESSAGE
 bot.on('message', async (msg) => {
     const text = msg.text || "";
 
-    // 👤 ISH IZLASH
+    // 👤 ISH IZLASH → REGION TANLASH
     if (text === '👤 Ish izlayapman') {
+        return bot.sendMessage(msg.chat.id, "📍 Qayerdan ish izlayapsiz?", {
+            reply_markup: {
+                keyboard: [
+                    ['Toshkent', 'Samarqand'],
+                    ['Buxoro', 'Andijon'],
+                    ['Farg‘ona', 'Namangan'],
+                    ['Qashqadaryo', 'Surxondaryo'],
+                    ['🔙 Orqaga']
+                ],
+                resize_keyboard: true
+            }
+        });
+    }
+
+    // 🔎 REGION FILTER
+    else if (regions.includes(text)) {
         try {
-            const snapshot = await db.collection("jobs").get();
+            const snapshot = await db.collection("jobs")
+                .where("region", "==", text)
+                .get();
 
             if (snapshot.empty) {
-                return bot.sendMessage(msg.chat.id, "❌ Hozircha ishlar yo‘q");
+                return bot.sendMessage(msg.chat.id, "❌ Bu viloyatda ish topilmadi");
             }
 
             snapshot.forEach(doc => {
@@ -85,12 +104,10 @@ bot.on('message', async (msg) => {
                 bot.sendMessage(msg.chat.id, message, {
                     reply_markup: {
                         inline_keyboard: [
-                            [
-                                {
-                                    text: "📩 Ariza berish",
-                                    callback_data: doc.id
-                                }
-                            ]
+                            [{
+                                text: "📩 Ariza berish",
+                                callback_data: doc.id
+                            }]
                         ]
                     }
                 });
@@ -98,8 +115,21 @@ bot.on('message', async (msg) => {
 
         } catch (error) {
             console.log(error);
-            bot.sendMessage(msg.chat.id, "❌ Xatolik yuz berdi");
+            bot.sendMessage(msg.chat.id, "❌ Xatolik");
         }
+    }
+
+    // 🔙 ORQAGA
+    else if (text === '🔙 Orqaga') {
+        bot.sendMessage(msg.chat.id, "👋 Asosiy menyu", {
+            reply_markup: {
+                keyboard: [
+                    ['👤 Ish izlayapman'],
+                    ['🏢 Ish beraman']
+                ],
+                resize_keyboard: true
+            }
+        });
     }
 
     // 🏢 ISH BERISH
@@ -111,6 +141,7 @@ Lavozim:
 Maosh:
 Manzil:
 Tel:
+Viloyat:
 
 💎 VIP qilish uchun: /vip
         `);
@@ -119,8 +150,17 @@ Tel:
     // 💾 SAQLASH
     else if (text.includes('Lavozim:')) {
         try {
+            let region = "Toshkent";
+
+            regions.forEach(r => {
+                if (text.includes(r)) {
+                    region = r;
+                }
+            });
+
             await db.collection("jobs").add({
                 text: text,
+                region: region,
                 createdAt: new Date(),
                 isPremium: false
             });
@@ -132,7 +172,7 @@ Tel:
         }
     }
 
-    // 📋 ADMIN - ISHLARNI KO‘RISH
+    // 📋 ADMIN JOBS
     else if (text === 'admin jobs' && msg.from.id === ADMIN_ID) {
         const snapshot = await db.collection("jobs").get();
 
@@ -147,6 +187,7 @@ ${job.text}
         });
     }
 
+    // ⭐ VIP
     else if (text.startsWith('vip ') && msg.from.id === ADMIN_ID) {
         try {
             const id = text.split(' ')[1];
@@ -156,12 +197,12 @@ ${job.text}
             });
 
             bot.sendMessage(msg.chat.id, "🔥 VIP qilindi!");
-        } catch (error) {
-            bot.sendMessage(msg.chat.id, "❌ Xatolik (ID noto‘g‘ri bo‘lishi mumkin)");
+        } catch {
+            bot.sendMessage(msg.chat.id, "❌ Xatolik");
         }
     }
 
-    // ❌ ADMIN - O‘CHIRISH
+    // ❌ DELETE
     else if (text.startsWith('delete ') && msg.from.id === ADMIN_ID) {
         const id = text.split(' ')[1];
 
@@ -176,56 +217,25 @@ bot.on("callback_query", async (query) => {
     const jobId = query.data;
     const chatId = query.message.chat.id;
 
-    try {
-        const doc = await db.collection("jobs").doc(jobId).get();
+    const doc = await db.collection("jobs").doc(jobId).get();
 
-        if (!doc.exists) {
-            return bot.sendMessage(chatId, "❌ Ish topilmadi");
-        }
+    if (!doc.exists) {
+        return bot.sendMessage(chatId, "❌ Ish topilmadi");
+    }
 
-        const job = doc.data();
+    const job = doc.data();
 
-        bot.sendMessage(chatId, `
+    bot.sendMessage(chatId, `
 📩 Ariza berish uchun:
 
 ${job.text}
-        `);
-
-    } catch (error) {
-        console.log(error);
-        bot.sendMessage(chatId, "❌ Xatolik yuz berdi");
-    }
+    `);
 });
 
-bot.onText(/\/start (.+)/, async (msg, match) => {
-    const jobId = match[1];
-    const chatId = msg.chat.id;
-
-    try {
-        const doc = await db.collection("jobs").doc(jobId).get();
-
-        if (!doc.exists) {
-            return bot.sendMessage(chatId, "❌ Ish topilmadi");
-        }
-
-        const job = doc.data();
-
-        bot.sendMessage(chatId, `
-📩 Siz quyidagi ishga ariza bermoqdasiz:
-
-${job.text}
-        `);
-
-    } catch (error) {
-        console.log(error);
-        bot.sendMessage(chatId, "❌ Xatolik yuz berdi");
-    }
-});
-
+// 💰 PAYMENT SCREENSHOT
 bot.on('photo', async (msg) => {
     const chatId = msg.chat.id;
 
-    // Adminga yuboramiz
     bot.sendMessage(ADMIN_ID, `
 💰 Yangi to‘lov!
 
@@ -234,5 +244,5 @@ User: ${msg.from.id}
 
     bot.forwardMessage(ADMIN_ID, chatId, msg.message_id);
 
-    bot.sendMessage(chatId, "✅ To‘lovingiz qabul qilindi, tekshirilmoqda");
+    bot.sendMessage(chatId, "✅ To‘lovingiz tekshirilmoqda");
 });
