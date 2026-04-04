@@ -179,11 +179,13 @@ Click / Payme: 5614681916164076
         bot.sendMessage(msg.chat.id, `
 📝 Ish e'lon yuboring:
 
-Lavozim:
-Maosh:
-Manzil:
-Tel:
-Viloyat:
+Quyidagi formatda yozing 👇
+
+Lavozim: Ofitsiant
+Maosh: 1 500 000 so'm
+Manzil: Kogon shahar
+Tel: +998901234567
+Viloyat: Buxoro
         `);
     }
 
@@ -197,7 +199,7 @@ Viloyat:
             }
         });
 
-        await db.collection("jobs").add({
+        const docRef = await db.collection("jobs").add({
             text: text,
             region: region,
             ownerId: msg.from.id,
@@ -205,7 +207,25 @@ Viloyat:
             isPremium: false
         });
 
-        bot.sendMessage(msg.chat.id, "✅ Ish e'lon saqlandi!");
+        // 🔥 ISHNI KO‘RSATAMIZ
+        bot.sendMessage(msg.chat.id, `
+        ✅ Ish e'lon joylandi!
+
+        🆔 ID: ${docRef.id}
+
+        🧾 ${text}
+        `, {
+            reply_markup: {
+                inline_keyboard: [
+                    [
+                        {
+                            text: "💎 VIP qilish",
+                            callback_data: "vip_" + docRef.id
+                        }
+                    ]
+                ]
+            }
+        });
     }
 
     // ADMIN JOBS
