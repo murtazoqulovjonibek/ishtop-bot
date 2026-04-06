@@ -209,11 +209,11 @@ Viloyat: Buxoro
 
         // 🔥 ISHNI KO‘RSATAMIZ
         bot.sendMessage(msg.chat.id, `
-        ✅ Ish e'lon joylandi!
+✅ Ish e'lon joylandi!
 
-        🆔 ID: ${docRef.id}
+🆔 ID: ${docRef.id}
 
-        🧾 ${text}
+🧾 ${text}
         `, {
             reply_markup: {
                 inline_keyboard: [
@@ -290,16 +290,24 @@ bot.on('photo', async (msg) => {
     const jobId = vipRequests[chatId];
 
     if (!jobId) {
-        return bot.sendMessage(chatId, "❌ Avval vip ID yuboring");
+        return bot.sendMessage(chatId, "❌ Avval vip tugmasini bosing");
     }
 
-    const doc = await db.collection("jobs").doc(jobId).get();
+    const docRef = db.collection("jobs").doc(jobId);
+    const doc = await docRef.get();
+
     if (!doc.exists) {
         return bot.sendMessage(chatId, "❌ Ish topilmadi");
     }
 
     const job = doc.data();
 
+    // 🔥 AUTO VIP
+    await docRef.update({
+        isPremium: true
+    });
+
+    // ADMIN GA
     bot.sendMessage(ADMIN_ID, `
 💰 VIP TO‘LOV!
 
@@ -311,7 +319,7 @@ ${job.text}
 
     bot.forwardMessage(ADMIN_ID, chatId, msg.message_id);
 
-    bot.sendMessage(chatId, "✅ To‘lov yuborildi!");
+    bot.sendMessage(chatId, "🔥 VIP aktiv qilindi!");
 
     delete vipRequests[chatId];
 });
