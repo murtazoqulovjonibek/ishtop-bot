@@ -266,22 +266,40 @@ ${job.text}
 
 // APPLY BUTTON
 bot.on("callback_query", (query) => {
-    const jobId = query.data;
+    const data = query.data;
     const chatId = query.message.chat.id;
 
-    userStates[chatId] = {
-        step: "apply",
-        jobId: jobId
-    };
+    // 🔥 VIP BUTTON
+    if (data.startsWith("vip_")) {
+        const jobId = data.split("_")[1];
 
-    bot.sendMessage(chatId, `
+        vipRequests[chatId] = jobId;
+
+        bot.sendMessage(chatId, `
+💳 To‘lov qiling:
+
+Click / Payme: 5614681916164076
+
+📸 Chekni yuboring
+        `);
+    }
+
+    // 🔥 APPLY BUTTON
+    else {
+        userStates[chatId] = {
+            step: "apply",
+            jobId: data
+        };
+
+        bot.sendMessage(chatId, `
 📩 Ariza berish:
 
 Ismingiz va telefon raqamingizni yuboring
 
 Masalan:
 Ali +998901234567
-    `);
+        `);
+    }
 });
 
 // 🔥 PAYMENT UPDATED
