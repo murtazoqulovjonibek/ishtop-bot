@@ -265,12 +265,23 @@ ${job.text}
 });
 
 // APPLY BUTTON
-bot.on("callback_query", (query) => {
+bot.on("callback_query", async (query) => {
     const data = query.data;
     const chatId = query.message.chat.id;
 
-    // 🔥 VIP BUTTON
-    if (data.startsWith("vip_")) {
+    // 🔥 ADMIN VIP (ENG MUHIM - tepada bo‘lishi kerak)
+    if (data.startsWith("admin_vip_")) {
+        const jobId = data.split("_")[2];
+
+        await db.collection("jobs").doc(jobId).update({
+            isPremium: true
+        });
+
+        bot.sendMessage(chatId, "🔥 VIP qilindi!");
+    }
+
+    // 🔥 USER VIP
+    else if (data.startsWith("vip_")) {
         const jobId = data.split("_")[1];
 
         vipRequests[chatId] = jobId;
@@ -284,7 +295,7 @@ Click / Payme: 5614681916164076
         `);
     }
 
-    // 🔥 APPLY BUTTON
+    // 🔥 APPLY
     else {
         userStates[chatId] = {
             step: "apply",
