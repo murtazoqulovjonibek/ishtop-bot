@@ -308,11 +308,10 @@ bot.on('photo', async (msg) => {
     const jobId = vipRequests[chatId];
 
     if (!jobId) {
-        return bot.sendMessage(chatId, "❌ Avval vip tugmasini bosing");
+        return bot.sendMessage(chatId, "❌ Avval VIP tugmasini bosing");
     }
 
-    const docRef = db.collection("jobs").doc(jobId);
-    const doc = await docRef.get();
+    const doc = await db.collection("jobs").doc(jobId).get();
 
     if (!doc.exists) {
         return bot.sendMessage(chatId, "❌ Ish topilmadi");
@@ -320,12 +319,7 @@ bot.on('photo', async (msg) => {
 
     const job = doc.data();
 
-    // 🔥 AUTO VIP
-    await docRef.update({
-        isPremium: true
-    });
-
-    // ADMIN GA
+    // 🔥 ADMIN GA YUBORAMIZ (VIP QILMASDAN)
     bot.sendMessage(ADMIN_ID, `
 💰 VIP TO‘LOV!
 
@@ -333,11 +327,22 @@ bot.on('photo', async (msg) => {
 🆔 ID: ${jobId}
 
 ${job.text}
-    `);
+    `, {
+        reply_markup: {
+            inline_keyboard: [
+                [
+                    {
+                        text: "✅ VIP qilish",
+                        callback_data: "admin_vip_" + jobId
+                    }
+                ]
+            ]
+        }
+    });
 
     bot.forwardMessage(ADMIN_ID, chatId, msg.message_id);
 
-    bot.sendMessage(chatId, "🔥 VIP aktiv qilindi!");
+    bot.sendMessage(chatId, "✅ To‘lovingiz tekshirilmoqda");
 
     delete vipRequests[chatId];
 });
